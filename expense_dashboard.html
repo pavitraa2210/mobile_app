@@ -250,8 +250,17 @@
         });
         //Rejected Added Right noe for editing only.
         $("#rejected-container").on('swiperight', function () {
-            console.log('swiperight')
-            showRejected()
+            console.log('swiperight');
+            var selectedExpense = $(this).find('.selected');
+
+            if (selectedExpense.length > 0) {
+                var expenseData = selectedExpense.data('expense');
+                if (expenseData.status === 'Rejected') {
+                    // Store expense data and redirect to edit page
+                    sessionStorage.setItem('resubmitExpense', JSON.stringify(expenseData));
+                    window.location.href = 'edit_expense.html';
+                }
+            }
         });
         //Rejected Added Right noe for editing only.
 

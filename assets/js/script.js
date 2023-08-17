@@ -4,227 +4,271 @@ const TRIP_SELECTED = "item";
 const SHIP_DOC_TYPES = "doc_types";
 const LOCATIONS = "updatedLocation";
 running_uploads = 0;
-/*Swipe Functionality*/
-(function() {
+
+// Swipe Functionality
+(function () {
     var supportTouch = $.support.touch,
-            scrollEvent = "touchmove scroll",
-            touchStartEvent = supportTouch ? "touchstart" : "mousedown",
-            touchStopEvent = supportTouch ? "touchend" : "mouseup",
-            touchMoveEvent = supportTouch ? "touchmove" : "mousemove";
+        scrollEvent = "touchmove scroll",
+        touchStartEvent = supportTouch ? "touchstart" : "mousedown",
+        touchStopEvent = supportTouch ? "touchend" : "mouseup",
+        touchMoveEvent = supportTouch ? "touchmove" : "mousemove";
     $.event.special.swipeupdown = {
-        setup: function() {
+        setup: function () {
             var thisObject = this;
             var $this = $(thisObject);
-            $this.bind(touchStartEvent, function(event) {
+            $this.bind(touchStartEvent, function (event) {
                 var data = event.originalEvent.touches ?
-                        event.originalEvent.touches[ 0 ] :
-                        event,
-                        start = {
-                            time: (new Date).getTime(),
-                            coords: [ data.pageX, data.pageY ],
-                            origin: $(event.target)
-                        },
-                        stop;
+                    event.originalEvent.touches[0] :
+                    event,
+                    start = {
+                        time: (new Date).getTime(),
+                        coords: [data.pageX, data.pageY],
+                        origin: $(event.target)
+                    },
+                    stop;
+
                 function moveHandler(event) {
                     if (!start) {
                         return;
                     }
                     var data = event.originalEvent.touches ?
-                            event.originalEvent.touches[ 0 ] :
-                            event;
+                        event.originalEvent.touches[0] :
+                        event;
                     stop = {
                         time: (new Date).getTime(),
-                        coords: [ data.pageX, data.pageY ]
+                        coords: [data.pageX, data.pageY]
                     };
-                    /*prevent scrolling*/
+
+                    // prevent scrolling
                     if (Math.abs(start.coords[1] - stop.coords[1]) > 10) {
                         event.preventDefault();
                     }
                 }
                 $this
-                        .bind(touchMoveEvent, moveHandler)
-                        .one(touchStopEvent, function(event) {
-                    $this.unbind(touchMoveEvent, moveHandler);
-                    if (start && stop) {
-                        if (stop.time - start.time < 1000 &&
+                    .bind(touchMoveEvent, moveHandler)
+                    .one(touchStopEvent, function (event) {
+                        $this.unbind(touchMoveEvent, moveHandler);
+                        if (start && stop) {
+                            if (stop.time - start.time < 1000 &&
                                 Math.abs(start.coords[1] - stop.coords[1]) > 30 &&
                                 Math.abs(start.coords[0] - stop.coords[0]) < 75) {
-                            start.origin
+                                start.origin
                                     .trigger("swipeupdown")
                                     .trigger(start.coords[1] > stop.coords[1] ? "swipeup" : "swipedown");
+                            }
                         }
-                    }
-                    start = stop = undefined;
-                });
+                        start = stop = undefined;
+                    });
             });
         }
     };
     $.each({
         swipedown: "swipeupdown",
         swipeup: "swipeupdown"
-    }, function(event, sourceEvent){
+    }, function (event, sourceEvent) {
         $.event.special[event] = {
-            setup: function(){
+            setup: function () {
                 $(this).bind(sourceEvent, $.noop);
             }
         };
     });
+
 })();
 
-/*signature draw function*/
-(function() {
-    window.requestAnimFrame = (function(callback) {
-      return window.requestAnimationFrame ||
-        window.webkitRequestAnimationFrame ||
-        window.mozRequestAnimationFrame ||
-        window.oRequestAnimationFrame ||
-        window.msRequestAnimaitonFrame ||
-        function(callback) {
-          window.setTimeout(callback, 1000 / 60);
-        };
+
+
+// signature draw function
+(function () {
+    window.requestAnimFrame = (function (callback) {
+        return window.requestAnimationFrame ||
+            window.webkitRequestAnimationFrame ||
+            window.mozRequestAnimationFrame ||
+            window.oRequestAnimationFrame ||
+            window.msRequestAnimaitonFrame ||
+            function (callback) {
+                window.setTimeout(callback, 1000 / 60);
+            };
     })();
-    var canvas = document.getElementById("sig-canvas");
-    var ctx = canvas.getContext("2d");
+
+    var canvas = document.getElementById('myCanvas');
+    var context = canvas.getContext('2d');
     ctx.strokeStyle = 'red';
-    ctx.lineWidth = 0;
+    ctx.lineWidth = 1;
+
     var drawing = false;
     var mousePos = {
-      x: 0,
-      y: 0
+        x: 0,
+        y: 0
     };
     var lastPos = mousePos;
-    canvas.addEventListener("mousedown", function(e) {
-      drawing = true;
-      lastPos = getMousePos(canvas, e);
-    }, false);
-  
-    canvas.addEventListener("mouseup", function(e) {
-      drawing = false;
-    }, false);
-      canvas.addEventListener("mousemove", function(e) {
-      mousePos = getMousePos(canvas, e);
-    }, false);
-      /*Add touch event support for mobile*/
-    canvas.addEventListener("touchstart", function(e) {
-  
-    }, false);
-    canvas.addEventListener("touchmove", function(e) {
-      var touch = e.touches[0];
-      var me = new MouseEvent("mousemove", {
-        clientX: touch.clientX,
-        clientY: touch.clientY
-      });
-      canvas.dispatchEvent(me);
-    }, false);
-  
-    canvas.addEventListener("touchstart", function(e) {
-      mousePos = getTouchPos(canvas, e);
-      var touch = e.touches[0];
-      var me = new MouseEvent("mousedown", {
-        clientX: touch.clientX,
-        clientY: touch.clientY
-      });
-      canvas.dispatchEvent(me);
-    }, false);
-  
-    canvas.addEventListener("touchend", function(e) {
-      var me = new MouseEvent("mouseup", {});
-      canvas.dispatchEvent(me);
-    }, false);
-  
-    function getMousePos(canvasDom, mouseEvent) {
-      var rect = canvasDom.getBoundingClientRect();
-      return {
-        x: mouseEvent.clientX - rect.left,
-        y: mouseEvent.clientY - rect.top
-      }
-    }
-  
-    function getTouchPos(canvasDom, touchEvent) {
-      var rect = canvasDom.getBoundingClientRect();
-      return {
-        x: touchEvent.touches[0].clientX - rect.left,
-        y: touchEvent.touches[0].clientY - rect.top
-      }
-    }
-  
-    function renderCanvas() {
-      if (drawing) {
-        ctx.moveTo(lastPos.x, lastPos.y);
-        ctx.lineTo(mousePos.x, mousePos.y);
-        ctx.stroke();
-        lastPos = mousePos;
-      }
-    }
-  
-    /*Prevent scrolling when touching the canvas*/
-    document.body.addEventListener("touchstart", function(e) {
-      if (e.target == canvas) {
-        e.preventDefault();
-      }
-    }, false);
-    document.body.addEventListener("touchend", function(e) {
-      if (e.target == canvas) {
-        e.preventDefault();
-      }
-    }, false);
-    document.body.addEventListener("touchmove", function(e) {
-      if (e.target == canvas) {
-        e.preventDefault();
-      }
-    }, false);
-  
-    (function drawLoop() {
-      requestAnimFrame(drawLoop);
-      renderCanvas();
-    })();
-  
-    function clearCanvas() {
-      canvas.width = canvas.width;
-    }
-  
-    var clearBtn = document.getElementById("sig-clearBtn");
-    var submitBtn = document.getElementById("sig-submitBtn");
-    clearBtn.addEventListener("click", function(e) {
-        clearCanvas();
-        /*sigText.innerHTML = "Data URL for your signature will go here!";
-        sigImage.setAttribute("src", "");*/
+
+    canvas.addEventListener("mousedown", function (e) {
+        drawing = true;
+        lastPos = getMousePos(canvas, e);
     }, false);
 
-    submitBtn.addEventListener("click", function(e) {
+    canvas.addEventListener("mouseup", function (e) {
+        drawing = false;
+    }, false);
+
+    canvas.addEventListener("mousemove", function (e) {
+        mousePos = getMousePos(canvas, e);
+    }, false);
+
+    // Add touch event support for mobile
+    canvas.addEventListener("touchstart", function (e) {
+
+    }, false);
+
+    canvas.addEventListener("touchmove", function (e) {
+        var touch = e.touches[0];
+        var me = new MouseEvent("mousemove", {
+            clientX: touch.clientX,
+            clientY: touch.clientY
+        });
+        canvas.dispatchEvent(me);
+    }, false);
+
+    canvas.addEventListener("touchstart", function (e) {
+        mousePos = getTouchPos(canvas, e);
+        var touch = e.touches[0];
+        var me = new MouseEvent("mousedown", {
+            clientX: touch.clientX,
+            clientY: touch.clientY
+        });
+        canvas.dispatchEvent(me);
+    }, false);
+
+    canvas.addEventListener("touchend", function (e) {
+        var me = new MouseEvent("mouseup", {});
+        canvas.dispatchEvent(me);
+    }, false);
+
+    function getMousePos(canvasDom, mouseEvent) {
+        var rect = canvasDom.getBoundingClientRect();
+        return {
+            x: mouseEvent.clientX - rect.left,
+            y: mouseEvent.clientY - rect.top
+        }
+    }
+
+    function getTouchPos(canvasDom, touchEvent) {
+        var rect = canvasDom.getBoundingClientRect();
+        return {
+            x: touchEvent.touches[0].clientX - rect.left,
+            y: touchEvent.touches[0].clientY - rect.top
+        }
+    }
+
+    function renderCanvas() {
+        if (drawing) {
+            ctx.moveTo(lastPos.x, lastPos.y);
+            ctx.lineTo(mousePos.x, mousePos.y);
+            ctx.stroke();
+            lastPos = mousePos;
+        }
+    }
+
+    // Prevent scrolling when touching the canvas
+    document.body.addEventListener("touchstart", function (e) {
+        if (e.target == canvas) {
+            e.preventDefault();
+        }
+    }, false);
+    document.body.addEventListener("touchend", function (e) {
+        if (e.target == canvas) {
+            e.preventDefault();
+        }
+    }, false);
+    document.body.addEventListener("touchmove", function (e) {
+        if (e.target == canvas) {
+            e.preventDefault();
+        }
+    }, false);
+
+    (function drawLoop() {
+        requestAnimFrame(drawLoop);
+        renderCanvas();
+    })();
+
+    function clearCanvas() {
+        canvas.width = canvas.width;
+    }
+
+
+    var clearBtn = document.getElementById("sig-clearBtn");
+    var submitBtn = document.getElementById("sig-submitBtn");
+    clearBtn.addEventListener("click", function (e) {
+        clearCanvas();
+        // sigText.innerHTML = "Data URL for your signature will go here!";
+        // sigImage.setAttribute("src", "");
+    }, false);
+
+    submitBtn.addEventListener("click", function (e) {
+
         ctx.globalCompositeOperation = 'destination-over';
         ctx.fillStyle = "white";
         ctx.fillRect(0, 0, canvas.width, canvas.height);
+
         var dataUrl = canvas.toDataURL();
-    /*  sigText.innerHTML = dataUrl;
-      sigImage.setAttribute("src", dataUrl);
-        console.log(dataUrl)*/
+        //   sigText.innerHTML = dataUrl;
+        //   sigImage.setAttribute("src", dataUrl);
+        // console.log(dataUrl)
         sendSigToMilestone(dataUrl)
     }, false);
-  
-  })();
 
-/*Common functions starts here*/
+});
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// Common functions starts here
+
 function setOS() {
-    if(/android/i.test(navigator.userAgent)) {
+    if (/android/i.test(navigator.userAgent)) {
         sessionStorage.setItem('OS', 'Android')
-    }else if(/iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream) {
+    }
+
+    else if (/iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream) {
         sessionStorage.setItem('OS', 'iOS')
-    }else {
+    }
+
+    else {
         sessionStorage.setItem('OS', 'Linux')
-    } 
+    }
 }
 
 function getOS() {
-    return sessionStorage.getItem('OS') 
+    return sessionStorage.getItem('OS')
 }
 
 function camelCase(str) {
     str = str.toLowerCase();
-    arr =  str.split(' ');
+    arr = str.split(' ');
     str_new = '';
-    for ( j =0 ; j<arr.length; j++) {
-        arr[j] = arr[j].replace(arr[j].charAt(0), arr[j].charAt(0).toUpperCase());        
+    for (j = 0; j < arr.length; j++) {
+        arr[j] = arr[j].replace(arr[j].charAt(0), arr[j].charAt(0).toUpperCase());
         str_new += arr[j] + ' ';
     }
     return str_new;
@@ -235,12 +279,12 @@ function logOut() {
     window.location = "login.html"
 }
 
-function saveUser(userJson){
+function saveUser(userJson) {
     sessionStorage.setItem(SESSION_DRIVER, JSON.stringify(userJson));
     localStorage.setItem(SESSION_DRIVER, JSON.stringify(userJson))
 }
 
-function getUser(){
+function getUser() {
     var user = null;
     user = JSON.parse(sessionStorage.getItem(SESSION_DRIVER));
     user = JSON.parse(localStorage.getItem(SESSION_DRIVER));
@@ -248,12 +292,13 @@ function getUser(){
 }
 
 function getDriverImei() {
-    if(isDriverLoggedIn()) {
+    if (isDriverLoggedIn()) {
         console.log('IMEI: ', getUser().imei)
         return getUser().imei
     }
     return "";
 }
+
 
 function getSelectedTrip() {
     var trip = null;
@@ -287,24 +332,27 @@ function warning(message, desc) {
     createPopup(message, desc, icon)
 }
 
-function success(message, desc, location, icon="./assets/img/status_check_ver.svg") {
-    /*var icon = "./assets/img/order-accepted.svg"
-    var icon = "./assets/img/status_check_ver.svg";*/
+function success(message, desc, location, icon = "./assets/img/status_check_ver.svg") {
+    // var icon = "./assets/img/order-accepted.svg"
+    // var icon = "./assets/img/status_check_ver.svg";
     createPopup(message, desc, icon, location)
 }
 
+
 function error(message, desc, location) {
+    // console.log('error', location);
     var icon = "./assets/img/popup-error-icon.svg"
     createPopup(message, desc, icon, location)
 }
 
 function confirmation(head, desc, target_function) {
+    // console.log(func)
     var body = document.getElementsByTagName("BODY")[0];
     var div = document.createElement('div');
     div.className = 'popup-bg';
     div.id = 'confirm';
     div.innerHTML +=
-    `<div class="popup confirm">
+        `<div class="popup confirm">
         <div class="text-head">${head}</div>
         <div class="text-detail">${desc}</div>
         <div class= "td-50 confirm-btn yes" onclick="closeConfirm(true, ${target_function})">Yes</div>
@@ -316,19 +364,20 @@ function confirmation(head, desc, target_function) {
 
 function closeConfirm(response, target_function) {
     console.log(target_function)
-    if(response) {
+    if (response) {
         target_function();
     }
     document.getElementById('confirm').remove();
 }
 
 function createPopup(head, desc, icon, location) {
+    // console.log('createPopup', location)
     var body = document.getElementsByTagName("BODY")[0];
     var div = document.createElement('div');
     div.className = 'popup-bg';
     div.id = 'popup';
     div.innerHTML +=
-    `<div class="popup">
+        `<div class="popup">
         <div class="icon">
             <img src=${icon} height=72 width=72 />
         </div>
@@ -340,26 +389,30 @@ function createPopup(head, desc, icon, location) {
 }
 
 function closePopup(location) {
+    // console.log('poppped', location)
     document.getElementById('popup').remove();
-    if(location != 'undefined') {
-        window.location=location;
+    if (location != 'undefined') {
+        window.location = location;
     }
 }
 
+
 function get_date(timestamp, timezone) {
     const MONTHS = ["", "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
-    date_time = new Date(timestamp * 1000).toLocaleString("en-US", {timeZone: timezone})
+    date_time = new Date(timestamp * 1000).toLocaleString("en-US", { timeZone: timezone })
     date = date_time.split(",")[0].split("/");
-    date_str = date[1] + " " + MONTHS[date[0]] + ", " + date[2]%100;
+    date_str = date[1] + " " + MONTHS[date[0]] + ", " + date[2] % 100;
     return date_str;
 }
 
 function get_time(timestamp, timezone) {
-    date_time = new Date(timestamp * 1000).toLocaleString("en-US", {timeZone: timezone})
+    date_time = new Date(timestamp * 1000).toLocaleString("en-US", { timeZone: timezone })
     time = date_time.split(",")[1].split(":");
-    time_str = time[0]+":"+time[1]+ " " + time[2].split(" ")[1];
+    time_str = time[0] + ":" + time[1] + " " + time[2].split(" ")[1];
     return time_str;
 }
+
+
 
 function getLatLng() {
     loc = JSON.parse(sessionStorage.getItem(LOCATIONS))
@@ -368,6 +421,7 @@ function getLatLng() {
     return loc
 }
 
+
 function setLatLng(latitude, longitude) {
     lat_lng = {
         "latitude": latitude,
@@ -375,30 +429,36 @@ function setLatLng(latitude, longitude) {
     }
     sessionStorage.setItem(LOCATIONS, JSON.stringify(lat_lng));
     localStorage.setItem(LOCATIONS, JSON.stringify(lat_lng));
+
     console.log('set cordinates: ', latitude, longitude)
 }
 
-/*starts the location fetching in both Android and IOS device if any active shipments is 
-there for the driver*/
+
+
+// starts the location fetching in both Android and IOS device if any active shipments is 
+// there for the driver
 function startLocationService() {
-    /*if(locationServiceEnabled) 
-        return
-    locationServiceEnabled = true*/
-    if(getOS() == 'Android') {
+    console.log('starting location service for: ')
+    // if(locationServiceEnabled) 
+    //     return
+    // locationServiceEnabled = true
+    if (getOS() == 'Android') {
         Android.startLocationService('location service started from webview')
         console.log('Android')
-    } 
-    if(getOS() == 'iOS') {
-        window.webkit.messageHandlers.startLocationService.postMessage({ message: "start"})
+    }
+    if (getOS() == 'iOS') {
+        window.webkit.messageHandlers.startLocationService.postMessage({ message: "start" })
         console.log('iOS')
     }
 }
 
-function show_loader(text="Loading...", type) {
+
+function show_loader(text = "Loading...", type) {
+
     if (document.getElementById('loading') != null) {
         let container = document.getElementById('loading-container')
-        var loader = 
-        `<div id="${type}-encloser">
+        var loader =
+            `<div id="${type}-encloser">
             <div id="file-name-${type}" class="text-loading">
                 Uploading: ${text}
             </div>
@@ -410,13 +470,14 @@ function show_loader(text="Loading...", type) {
             </div>
         </div>`;
         container.innerHTML += loader
-        $("#loading-container").css("top", `${screen.height/2 - running_uploads*40}px`);
-        return 
+        $("#loading-container").css("top", `${screen.height / 2 - running_uploads * 40}px`);
+        return
     }
 
     let body = document.getElementsByTagName('BODY')[0]
-    var loader = 
-    `<div id="loading">
+
+    var loader =
+        `<div id="loading">
         <div class="popup-bg">
             <div id="loading-container" class="center-loading">
                 <div id="${type}-encloser">
@@ -434,7 +495,7 @@ function show_loader(text="Loading...", type) {
         </div>
     </div>`
     body.innerHTML += loader
-    return 
+    return
 }
 
 function hide_loader_with_bg() {
@@ -446,7 +507,47 @@ function hide_loader(type) {
     document.getElementById(`${type}-encloser`).remove();
 }
 
-/*AJAX Calls starts here*/
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// AJAX Calls starts here
 function startMultipleShipments(shipments, lat, lng) {
     var driver = getUser();
     var data_send = {
@@ -455,23 +556,31 @@ function startMultipleShipments(shipments, lat, lng) {
         "imei": driver.imei,
         "latitude": lat,
         "longitude": lng,
-        "timezone": driver.timezone   
+        "timezone": driver.timezone
     }
     console.log('datasend', data_send)
     $.ajax({
-        "url": API_URL+"/startMultipleShipments",
+        "url": API_URL + "/startMultipleShipments",
         "method": "POST",
+        // "data": {
+        //     "driver_id": driver.id,
+        //     "shipments": shipments,
+        //     "imei": driver.imei,
+        //     "latitude": LAT,         
+        //     "longitude": LNG,
+        //     "timezone": driver.timezone      
+        // },
         "data": data_send,
-        dataType:"JSON",
-        success:function(data) {
-            if(data.status == 1){
-                success('Order Accepted', 'Great Let\'s start our journey.!', "dashboard.html", icon="./assets/img/order-accepted.svg");
+        dataType: "JSON",
+        success: function (data) {
+            if (data.status == 1) {
+                success('Order Accepted', 'Great Let\'s start our journey.!', "dashboard.html", icon = "./assets/img/order-accepted.svg");
             } else {
                 error('Something went wrong!', data.data);
             }
         },
-        error:function(data) {
-            if(data.status == 1){
+        error: function (data) {
+            if (data.status == 1) {
                 console.log(data);
             } else {
                 error('Something went wrong!', 'Something seems broken from our side!')
@@ -493,6 +602,8 @@ function driverLogin(mobile, password, token, imei, mobile_number) {
         },
         dataType: "JSON",
         success: function (data) {
+            console.log(data);
+            // console.log(data.data.id);
             if (data.status == 1) {
                 saveUser(data.data)
                 window.location = "././dashboard.html";
@@ -505,44 +616,48 @@ function driverLogin(mobile, password, token, imei, mobile_number) {
 
 function getshipments(type) {
     var driver = getUser();
-    var search="";
+    var search = "";
     $.ajax({
-        "url": API_URL+"/getshipments",
+        "url": API_URL + "/getshipments",
         "method": "POST",
         "data": {
-          "driver_id": driver.id,
-          "search": search,
-          "type": type,
-          "imei": driver.imei,
+            "driver_id": driver.id,
+            "search": search,
+            "type": type,
+            "imei": driver.imei,
         },
-        dataType:"JSON",
-        success:function(data){
-          if(data.status == 1){
-              populate_data(data, type);
-          } else {  
-                if(type == 2) 
+        dataType: "JSON",
+        success: function (data) {
+            if (data.status == 1) {
+                console.log(data.data.doc_types)
+                populate_data(data, type);
+            } else {
+                if (type == 2)
                     show_empty_completed_shipments()
-                else 
+                else
                     show_empty_shipments()
-    
-          }
+
+                //     alert(data.message);
+            }
         }
-      }) 
+    })
 }
+
 
 function getshipmentstops(shift_id, shift_veh_id, trip_id, caller) {
     $.ajax({
-        "url": API_URL+"/getshipmentstops",
+        "url": API_URL + "/getshipmentstops",
         "method": "POST",
         "data": {
             "shift_id": shift_id,
             "shift_veh_id": shift_veh_id,
-            "trip_id": trip_id,        
+            "trip_id": trip_id,
         },
-        dataType:"JSON",
-        success:function(data) {
-            if(data.status == 1){
-                switch(caller) {
+        dataType: "JSON",
+        success: function (data) {
+            if (data.status == 1) {
+                console.log('getshipmentstops', data);
+                switch (caller) {
                     case 'shipment_acceptance':
                         populate_data(data.data);
                         process_data(data);
@@ -556,29 +671,30 @@ function getshipmentstops(shift_id, shift_veh_id, trip_id, caller) {
                     default:
                         break;
                 }
+
             }
         }
     })
 }
 
 
-function getshipstatuses(trip_id, timezone, caller,  stop_id, shipment_id, stop_detail_id, ) {
+function getshipstatuses(trip_id, timezone, caller, stop_id, shipment_id, stop_detail_id,) {
     console.log(trip_id, timezone, shipment_id, stop_id, stop_detail_id)
     $.ajax({
-        "url": API_URL+"/getshipstatuses",
+        "url": API_URL + "/getshipstatuses",
         "method": "POST",
         "data": {
             "timezone": timezone,
-            "trip_id": trip_id,  
+            "trip_id": trip_id,
             "shipment_id": shipment_id,
-            "stop_id": stop_id,  
-            "stop_detail_id": stop_detail_id,       
+            "stop_id": stop_id,
+            "stop_detail_id": stop_detail_id,
         },
-        dataType:"JSON",
-        success:function(data) {
-            if(data.status == 1){
-                console.log('getshipstatuses' ,data);
-                if(caller == 'milestone')
+        dataType: "JSON",
+        success: function (data) {
+            if (data.status == 1) {
+                console.log('getshipstatuses', data);
+                if (caller == 'milestone')
                     changeStatusButton(data.data, stop_id)
                 else
                     populate_status(data.data);
@@ -589,19 +705,22 @@ function getshipstatuses(trip_id, timezone, caller,  stop_id, shipment_id, stop_
     })
 }
 
+
+
 function closeTrip(trip_id, driver_id, timezone) {
     console.log(trip_id, driver_id, timezone)
     $.ajax({
-        "url": API_URL+"/closeTrip",
+        "url": API_URL + "/closeTrip",
         "method": "POST",
         "data": {
-            "trip_id": trip_id,   
+            "trip_id": trip_id,
             "driver_id": driver_id,
             "timezone": timezone,
         },
-        dataType:"JSON",
-        success:function(data) {
-            if(data.status == 1){
+        dataType: "JSON",
+        success: function (data) {
+            if (data.status == 1) {
+                console.log('closeTrip', data);
                 success('Trip Closed!', 'Suceessfully completed Trip.', "dashboard.html")
             } else {
                 error('Empty List!', 'Nothing to show');
@@ -610,60 +729,73 @@ function closeTrip(trip_id, driver_id, timezone) {
     })
 }
 
+
+
 function setshipAbort(trip_id, driver_id, timezone, latitude, longitude, reason, type, vehicle_id, shipment_id) {
     console.log("abort", trip_id, driver_id, timezone, latitude, longitude, reason, type, vehicle_id, shipment_id)
     $.ajax({
-        "url": API_URL+"/setshipAbort",
+        "url": API_URL + "/setshipAbort",
         "method": "POST",
         "data": {
-            "trip_id": trip_id,   
+            "trip_id": trip_id,
             "driver_id": driver_id,
             "timezone": timezone,
             "latitude": latitude,
-            "longitude": longitude,   
+            "longitude": longitude,
             "reason": reason,
             "type": type,
             "vehicle_id": vehicle_id,
             "shipment_id": shipment_id,
 
         },
-        dataType:"JSON",
-        success:function(data) {
-            if(data.status == 1){
+        dataType: "JSON",
+        success: function (data) {
+            if (data.status == 1) {
+                console.log('setshipAbort', data);
                 success('Trip Aborted!', 'Suceessfully aborted this trip.', "dashboard.html")
+                // success('Trip Closed!', 'Suceessfully completed Trip.', "dashboard.html")
             } else {
-                console.log('error' ,data);
+                console.log('error', data);
                 error('Error!', data.data);
             }
         }
     })
 }
 
+
+
 function rescheduleShift(date, reason) {
+
     data = getSelectedTrip();
     data.reason = reason
     data.reschedule_date = date
     data = JSON.stringify(data)
+    console.log(data)
     console.log("rescheduleShift", date, reason)
     $.ajax({
-        "url": API_URL+"/rescheduleShift",
+        "url": API_URL + "/rescheduleShift",
         "method": "POST",
         "data": {
             data
         },
-        dataType:"JSON",
-        success:function(data) {
-            if(data.status == 1){
+        dataType: "JSON",
+        success: function (data) {
+            if (data.status == 1) {
+                console.log('rescheduleShift', data);
                 success('Trip Reschedule Requested!', 'You will be notified about Acceptance or Denial of request', "dashboard.html")
+                // success('Trip Closed!', 'Suceessfully completed Trip.', "dashboard.html")
             } else {
-                console.log('error' ,data);
+                console.log('error', data);
                 error('Error!', data.data);
             }
         }
     })
 }
 
+
+
 function setShipReject(reason) {
+
     trip_data = getSelectedTrip();
     data = {}
     data.trip_id = trip_data.id
@@ -674,126 +806,156 @@ function setShipReject(reason) {
     data.vehicle_id = trip_data.vehicle_id
     data.driver_id = trip_data.driver_id
     data.shipment_id = trip_data.shift_id
+
+    console.log(data)
+
     data = JSON.stringify(data)
+    console.log(data)
+    console.log("setShipReject", reason)
     $.ajax({
-        "url": API_URL+"/setShipReject",
+        "url": API_URL + "/setShipReject",
         "method": "POST",
         "data": {
             data
         },
-        dataType:"JSON",
-        success:function(data) {
-            if(data.status == 1){
+        dataType: "JSON",
+        success: function (data) {
+            if (data.status == 1) {
+                console.log('setshipAbort', data);
                 success('Trip Rejected!', 'You have successfully rejected this trip', "dashboard.html")
             } else {
-                console.log('error' ,data);
+                console.log('error', data);
                 error('Error!', data.data);
             }
         }
     })
 }
 
+
 function get_parties_data(user_id, dropdown, value, caller_id) {
-    if(value.length > 1) {
+    if (value.length > 1) {
         $.ajax({
-            "url": API_URL+"/parties",
+            "url": API_URL + "/parties",
             "method": "POST",
             "data": {
                 "user_id": user_id,
                 "name": value,
             },
-            dataType:"JSON",
-            success:function(response){
-                if(response.status == 1){
+            dataType: "JSON",
+            success: function (response) {
+                if (response.status == 1) {
+                    console.log(response.data.id);
                     fill_dropdown(response.data, dropdown, caller_id);
-                } else {
+                }
+                else {
                     clear_dropdown(dropdown);
                 }
             }
         })
-    } 
+    }
 }
+
+
 
 function drivercollection(data) {
     driver = getUser();
     $.ajax({
-        "url": API_URL+"/drivercollection",
+        "url": API_URL + "/drivercollection",
         "method": "POST",
         "data": {
-            "driver_id": driver.id, 
+            "driver_id": driver.id,
             "user_id": driver.user_id,
             "imei": driver.imei,
-            "customer_id":driver.customer_id,
-            "data": data 
+            "customer_id": driver.customer_id,
+            "data": data
         },
-        success:function(data) {
-            if(data.status == 1){
+        // dataType:"JSON",
+        success: function (data) {
+            if (data.status == 1) {
+                console.log('drivercollection', data)
                 success('Shipment Collected!', 'You have successfully collected Shipment', "dashboard.html")
-            } else {
-                error('Error!' ,data.data);
+            }
+            else {
+                error('Error!', data.data);
             }
         }
     })
 }
+
+
 
 function getshipmentdocuments(shipment_id, stop_id) {
     console.log('getshipmentdocuments', shipment_id, stop_id)
     $.ajax({
-        "url": API_URL+"/getshipmentdocuments",
+        "url": API_URL + "/getshipmentdocuments",
         "method": "POST",
         "data": {
-            "shipment_id": shipment_id, 
+            "shipment_id": shipment_id,
             "stop_id": stop_id
         },
-        success:function(data) {
-            if(data.status == 1){
+        // dataType:"JSON",
+        success: function (data) {
+            if (data.status == 1) {
+                console.log('getshipmentdocuments', data)
                 populate_docs(data.data, stop_id)
-            } else {
-                error('Error!' ,data.data);
+            }
+            else {
+                error('Error!', data.data);
             }
         }
     })
 }
+
 
 function updatepassword(new_password) {
     $.ajax({
-        "url": API_URL+"/updatepassword",
+        "url": API_URL + "/updatepassword",
         "method": "POST",
         "data": {
-            "driver_id": getUser().id, 
+            "driver_id": getUser().id,
             "user_id": getUser().user_id,
             "newpassword": new_password
         },
-        success:function(data) {
-            if(data.status == 1){
+        // dataType:"JSON",
+        success: function (data) {
+            if (data.status == 1) {
+                console.log('updatepassword', data)
                 success('Password Changed!', 'Your password is successfully updated.', 'profile.html')
-            } else {
-                error('Error!' ,data.data);
+            }
+            else {
+                error('Error!', data.data);
             }
         }
     })
 }
 
-function setShipstopStatus(status, latitude, longitude, trip_id, shipment_id, stop_id, employee_id, stop_type, 
-    driver_id, stop_detail_type, status_type, timezone, fileName, file, signName, sign, camName, cam, 
+
+function setShipstopStatus(status, latitude, longitude, trip_id, shipment_id, stop_id, employee_id, stop_type,
+    driver_id, stop_detail_type, status_type, timezone, fileName, file, signName, sign, camName, cam,
     cam_orientation, file_orientation) {
-        console.log('setShipstopStatus' ,status, latitude, longitude, trip_id, shipment_id, stop_id, employee_id, stop_type, 
-        driver_id, stop_detail_type, status_type, timezone, fileName, file, signName, sign, camName, cam, 
+
+    console.log('setShipstopStatus', cam_orientation, file_orientation)
+    console.log('setShipstopStatus', status, latitude, longitude, trip_id, shipment_id, stop_id, employee_id, stop_type,
+        driver_id, stop_detail_type, status_type, timezone, fileName, file, signName, sign, camName, cam,
         cam_orientation, file_orientation)
-    if(fileName != '') {
-        uploadFile(latitude, longitude, trip_id, shipment_id, stop_id, employee_id, stop_type, 
+
+    if (fileName != '') {
+        uploadFile(latitude, longitude, trip_id, shipment_id, stop_id, employee_id, stop_type,
             driver_id, stop_detail_type, '2', timezone, fileName, file, 'file', file_orientation)
     }
-    if(signName != '') {
-        uploadFile(latitude, longitude, trip_id, shipment_id, stop_id, employee_id, stop_type, 
+
+    if (signName != '') {
+        uploadFile(latitude, longitude, trip_id, shipment_id, stop_id, employee_id, stop_type,
             driver_id, stop_detail_type, '1', timezone, signName, sign, 'sign', -2)
     }
-    if(camName != '') {
-        uploadFile(latitude, longitude, trip_id, shipment_id, stop_id, employee_id, stop_type, 
+
+    if (camName != '') {
+        uploadFile(latitude, longitude, trip_id, shipment_id, stop_id, employee_id, stop_type,
             driver_id, stop_detail_type, '2', timezone, camName, cam, 'cam', cam_orientation)
     }
-    if(status == 1)
-        return 
+
+    if (status == 1)
+        return
 
     data_to_send = {
         "status": status,
@@ -812,31 +974,39 @@ function setShipstopStatus(status, latitude, longitude, trip_id, shipment_id, st
     callSetShipstopStatus(data_to_send)
 }
 
+
 function callSetShipstopStatus(data_send) {
+
     $.ajax({
-        "url": API_URL+"/setShipstopStatus",
+        "url": API_URL + "/setShipstopStatus",
         "method": "POST",
         "data": data_send,
-        success:function(data) {
+        // dataType:"JSON",
+        success: function (data) {
             console.log(data)
             try {
                 data = JSON.parse(data)
-            } catch {}
-            if(data.status == 1){
+            } catch { }
+            if (data.status == 1) {
+                console.log('setShipstopStatus', data)
                 success('Status Updated!', 'Shipment status is successfully updated.', 'shipment_milestone.html')
-            } else {
+            }
+            else {
                 error('Error!', data.data);
             }
         }
     })
 }
 
-function uploadFile(latitude, longitude, trip_id, shipment_id, stop_id, employee_id, stop_type, driver_id, 
+
+function uploadFile(latitude, longitude, trip_id, shipment_id, stop_id, employee_id, stop_type, driver_id,
     stop_detail_type, status_type, timezone, fileName, file, type, image_orientation) {
-        running_uploads += 1
-        show_loader(fileName, type)
-        console.log('sendingFileToServer', latitude, longitude, trip_id, shipment_id, stop_id, employee_id, stop_type, driver_id, 
-            stop_detail_type, status_type, timezone, fileName, file, type, image_orientation)
+
+    running_uploads += 1
+    show_loader(fileName, type)
+    console.log('sendingFileToServer', latitude, longitude, trip_id, shipment_id, stop_id, employee_id, stop_type, driver_id,
+        stop_detail_type, status_type, timezone, fileName, file, type, image_orientation)
+
     var fd = new FormData();
     fd.append("file_name", file, fileName);
     fd.append("latitude", latitude);
@@ -851,8 +1021,8 @@ function uploadFile(latitude, longitude, trip_id, shipment_id, stop_id, employee
     fd.append("status_type", status_type);
     fd.append("timezone", timezone);
     fd.append("image_orientation", image_orientation);
-    
-    /*for updating status once all files are uploaded*/
+
+    // for updating status once all files are uploaded
     var data_to_send_new = {
         "status": 1,
         "latitude": latitude,
@@ -863,66 +1033,78 @@ function uploadFile(latitude, longitude, trip_id, shipment_id, stop_id, employee
         "employee_id": employee_id,
         "stop_type": stop_type,
         "driver_id": driver_id,
-        "stop_detail_type": stop_detail_type,   
-        "status_type": '1',
+        "stop_detail_type": stop_detail_type,
+        "status_type": '1',         // important to be 1
         "timezone": timezone
     }
 
+
     $.ajax({
-        xhr: function() {
+        xhr: function () {
             var xhr = new window.XMLHttpRequest();
-            xhr.upload.addEventListener("progress", function(evt) {
+            xhr.upload.addEventListener("progress", function (evt) {
                 if (evt.lengthComputable) {
                     var percentComplete = (evt.loaded / evt.total) * 100;
-                    /*Place upload progress bar visibility code here*/
-                    percentComplete = parseInt(percentComplete * 100)/100
+                    // Place upload progress bar visibility code here
+                    percentComplete = parseInt(percentComplete * 100) / 100
                     document.getElementById(`progressbar-progress-${type}`).style = `width: ${percentComplete}%`
                     document.getElementById(`percent-text-${type}`).innerHTML = `${percentComplete}%`
                 }
             }, false);
             return xhr;
         },
-        "url": API_URL+"/setShipstopStatus",
+        "url": API_URL + "/setShipstopStatus",
         "method": "POST",
         "data": fd,
         "processData": false,
         "contentType": false,
-        success:function(data) {
+        success: function (data) {
             hide_loader(type)
             running_uploads -= 1
             console.log('running_uploads', running_uploads)
             if (running_uploads == 0) {
                 callSetShipstopStatus(data_to_send_new)
                 hide_loader_with_bg()
+                // success('Status Updated!', 'Shipment status is successfully updated.', 'shipment_milestone.html')
             }
-            try {            
+            try {
                 data = JSON.parse(data)
             } catch { }
             console.log(data)
-            if(data.status == 1){
+            if (data.status == 1) {
                 console.log('setShipstopStatus', data)
-                if(getOS() == 'Android')
+                if (getOS() == 'Android')
                     Android.showToast(fileName + ' uploaded Successfully!')
                 else if (getOS() == 'iOS')
-                    window.webkit.messageHandlers.showMessage.postMessage({ message: fileName + ' uploaded Successfully!'})
+                    window.webkit.messageHandlers.showMessage.postMessage({ message: fileName + ' uploaded Successfully!' })
                 else
                     console.log(fileName + 'uploaded')
-            } else {
-                error('Error!' ,data.data);
+                // success('Success', fileName + ' uploaded Successfully!')
+            }
+            else {
+                error('Error!', data.data);
             }
         }
     })
-} 
+}
 
-function addrtdrivelocations(latitude, longitude, speed, battery, accuracy, bearing)
-{
+
+
+function addrtdrivelocations(latitude, longitude, speed, battery, accuracy, bearing) {
+    //    {"locations": "[{\"speed\":-1,\"id\":\"1\",\"bearing\":-1,\"driver_id\":42,\"battery\":91," +
+    //            "\"timestamp\":1655968233,\"longitude\":83.320908573859668,\"trip_id\":108," +
+    //            "\"latitude\":17.732468892987242,\"vehicle_id\":1,\"mobileimei\":\"hbhjbhjbhc\"," +
+    //            "\"accuracy\":65}]"}
+
     setLatLng(latitude, longitude)
+
     driver = getUser()
+
     var location = {
         'latitude': latitude,
         'longitude': longitude,
         'mobileimei': getUser().imei,
-        'timestamp': parseInt(Date.now()/1000),
+        'timestamp': parseInt(Date.now() / 1000),
         'speed': speed,
         'accuracy': accuracy,
         'battery': battery,
@@ -931,119 +1113,196 @@ function addrtdrivelocations(latitude, longitude, speed, battery, accuracy, bear
         'trip_id': driver.trip_id,
         'vehicle_id': driver.vehicle_id
     }
+
     var locations = [location]
     locations = JSON.stringify(locations)
     data = {
         'locations': locations
     }
-    data  = JSON.parse(JSON.stringify(data));
+
+    data = JSON.parse(JSON.stringify(data));
     console.log(JSON.stringify(data))
+
     $.ajax({
+
         url: 'https://tms.shipmentx.com/Mycontroller' + '/addrtdrivelocations',
         method: 'POST',
         dataType: 'json',
         data: JSON.stringify(data),
-        success:function(data) {
+
+        success: function (data) {
             console.log('periodic location update response:', JSON.stringify(data))
+            // if(data.locationresponse) {
+            //     console.log('addrtdrivelocations success', data.locationresponse.mobileimei)
+            // } 
+            // else {
+            //     console.log('addrtdrivelocations', data)
+            //     error('Location Error!' ,'location update failed in server');
+            // }
+        }
+    })
+
+}
+
+
+function get_expense(user_id, dropdown, value, caller_id) {
+    if (value.length > 1) {
+        $.ajax({
+            "url": API_URL + "/getExpenseTypes",
+            "method": "POST",
+            "data": {
+                "user_id": user_id,
+                "name": value,
+            },
+            dataType: "JSON",
+            success: function (data) {
+                if (data.status == 1) {
+                    fill_dropdown(data.data, dropdown, caller_id);
+                }
+                else {
+                    clear_dropdown(dropdown);
+                }
+            }
+        })
+    }
+}
+
+function get_vehicle(user_id, dropdown, value, caller_id) {
+
+    if (value.length > 1) {
+        $.ajax({
+            "url": API_URL + "/getDriverExpenseData",
+            "method": "POST",
+            "data": {
+                "user_id": user_id,
+                "name": value,
+            },
+            dataType: "JSON",
+            success: function (data) {
+                // if(data.status == 1 && data.data!=null){
+                if (data.status == 1) {
+                    /// console.log(data.data);
+                    fill_dropdown(data.data, dropdown, caller_id, 'vehicle_number');
+                }
+                else {
+                    // console.log('error');
+                    clear_dropdown(dropdown);
+                }
+            }
+        })
+    }
+}
+
+
+
+
+
+
+
+function getshipments(type) {
+    var driver = getUser();
+    var search = "";
+    $.ajax({
+        "url": API_URL + "/getshipments",
+        "method": "POST",
+        "data": {
+            "driver_id": driver.id,
+            "search": search,
+            "type": type,
+            "imei": driver.imei,
+        },
+        dataType: "JSON",
+        success: function (data) {
+            if (data.status == 1) {
+                console.log(data.data.doc_types)
+                populate_data(data, type);
+            } else {
+                if (type == 2)
+                    show_empty_completed_shipments()
+                else
+                    show_empty_shipments()
+
+                //     alert(data.message);
+            }
         }
     })
 }
 
-function get_expense(user_id, dropdown, value, caller_id) {
-    if(value.length > 1) {
-        $.ajax({
-            "url": API_URL+"/getExpenseTypes",
-            "method": "POST",
-            "data": {
-                "user_id": user_id,
-                "name": value,
-            },
-            dataType:"JSON",
-            success:function(data){
-                if(data.status == 1){
-                    fill_dropdown(data.data, dropdown, caller_id);
-                } else {
-                    clear_dropdown(dropdown);
-                }
-            }
-        })
-    } 
-}
-
-function get_vehicle(user_id, dropdown, value, caller_id) {
-    if(value.length > 1) {
-        $.ajax({
-            "url": API_URL+"/getDriverExpenseData",
-            "method": "POST",
-            "data": {
-                "user_id": user_id,
-                "name": value,
-            },
-            dataType:"JSON",
-            success:function(data){
-                if(data.status == 1){
-                    fill_dropdown(data.data, dropdown, caller_id, 'vehicle_number');
-                } else {
-                    clear_dropdown(dropdown);
-                }
-            }
-        })
-    } 
-}
-
 function getDriverExpenseData(type) {
     var driver = getUser();
-    var search="";
+    var search = "";
     $.ajax({
-        "url": API_URL+"/getDriverExpenseData",
+        "url": API_URL + "/getDriverExpenseData",
         "method": "POST",
         "data": {
-          "driver_id": driver.id,
-          "vehicle_id":driver.vehicle_id
+            "driver_id": driver.id,
+            "vehicle_id": driver.vehicle_id
         },
-        dataType:"JSON",
-        success:function(data){
-          if(data.status == 1){
-              console.log(data)
-              typeof(data);
-              populate_data(data, type);
-          } else {  
-                if(type == 2) 
+        dataType: "JSON",
+        success: function (data) {
+            if (data.status == 1) {
+                console.log(data)
+                typeof (data);
+                populate_data(data, type);
+
+            } else {
+                if (type == 2)
                     show_empty_completed_shipments()
-                else 
+                else
                     show_empty_shipments()
-          }
+
+                //     alert(data.message);
+            }
         }
-    }) 
+    })
 }
 
-function updateDriverExpenses(formData) {
+function updateDriverExpenses(formData, latitude, longitude) {
+
     driver = getUser();
     formData.append("driver_id", driver.id);
     formData.append("vehicle_id", driver.vehicle_id);
+    var locationData = {
+        latitude: latitude,
+        longitude: longitude
+    };
+
+    if (locationData) {
+        formData.append("latitude", locationData.latitude);
+        formData.append("longitude", locationData.longitude);
+    }
     $.ajax({
         url: API_URL + "/updateDriverExpenses",
+        /*"method": "POST",*/
         type: "POST",
         data: formData,
         processData: false,
         contentType: false,
         success: function (respdata) {
             if (respdata.status == 1) {
-                /*console.log('updateDriverExpenses', respdata);*/
+                console.log('updateDriverExpenses', respdata);
                 success('Expenses Updates!', 'You have successfully updated expenses');
-            } else {
+            }
+            else {
                 error('Error!', formData);
+
             }
         }
     });
 }
-
-function addDriverExpenses(formData) {
+function addDriverExpenses(formData, mylocation) {
+    // console.log(file);
     driver = getUser();
     formData.append("driver_id", driver.id);
+    console.log(driver);
     formData.append("vehicle_id", driver.vehicle_id);
+    formData.append("latitude", getLatLng.latitude);
+    formData.append("longitude", getLatLng.longitude);
+
+
     $.ajax({
         url: API_URL + "/addDriverExpenses",
+        /*"method": "POST",*/
         type: "POST",
         data: formData,
         processData: false,
@@ -1052,16 +1311,17 @@ function addDriverExpenses(formData) {
             if (respdata.status == 1) {
                 console.log('addDriverExpenses', respdata);
                 success('Expenses Added!', 'You have successfully added expenses');
-            } else {
+            }
+            else {
                 error('Error!', formData);
             }
         }
     });
 }
-  
+
 function getInspectionTypes() {
     $.ajax({
-    "url": API_URL+"/getInspectionTypes",
+        "url": API_URL + "/getInspectionTypes",
         dataType: "JSON",
         success: function (data) {
             if (data.status == 1) {
@@ -1071,16 +1331,20 @@ function getInspectionTypes() {
             }
         },
         error: function () {
+            // Handle AJAX error if needed
             console.log("Failed ");
         }
     });
 }
 
-function settripvehicleinspections(formData) {
+function settripvehicleinspections(formData, truckContainer_data) {
     driver = getUser();
+
     formData.append("driver_id", driver.id);
     formData.append("vehicle_id", driver.vehicle_id);
     formData.append("trip_id", driver.trip_id);
+    
+
     $.ajax({
         url: API_URL + "/settripvehicleinspections",
         type: "POST",
@@ -1088,11 +1352,18 @@ function settripvehicleinspections(formData) {
         processData: false,
         contentType: false,
         success: function (respdata) {
+            console.log('Response Data:', respdata);
+
             if (respdata.status == 1) {
-                console.log('settripvehicleinspections', respdata);
+                console.log('Success: Vehicle Inspections Added!');
                 success('Vehicle Inspections Added!', 'You have successfully added vehicle inspection');
-            }else {
-                error('Error!', formData);
+                setTimeout(function () {
+                    window.location.href = 'shipment_milestone.html'; // redirect to the shipment_milestone
+                }, 3000);
+
+            } else {
+                console.log('Error:', respdata);
+                error('Error!', 'An error occurred. See console for details.');
             }
         }
     });
@@ -1103,11 +1374,18 @@ function drivercheck(checkType, latitude, longitude) {
     const formData = new FormData();
     formData.append("driver_id", driver.id);
     formData.append("check_type", checkType);
-    formData.append("latitude", latitude);
-    formData.append("longitude", longitude);
+    var locationData = {
+        latitude: latitude,
+        longitude: longitude
+    };
+
+    if (locationData) {
+        formData.append("latitude", locationData.latitude);
+        formData.append("longitude", locationData.longitude);
+    }
 
     $.ajax({
-        url: API_URL + "/drivercheckin", 
+        url: API_URL + "/drivercheckin",
         type: "POST",
         data: formData,
         processData: false,
@@ -1115,10 +1393,14 @@ function drivercheck(checkType, latitude, longitude) {
         success: function (respdata) {
             if (respdata.status == 1) {
                 console.log('drivercheck', respdata);
-                
-            } 
-            else if(respdata.status == 2) {
+                success('Check-Out', 'You have successfully Checked Out');
+
+
+            }
+            else if (respdata.status == 2) {
+                success('Check-In', 'You have successfully Checked In');
                 console.log('drivercheck', respdata);
+
 
             }
             else {
@@ -1127,3 +1409,14 @@ function drivercheck(checkType, latitude, longitude) {
         },
     });
 }
+
+
+
+
+
+
+
+
+
+
+
