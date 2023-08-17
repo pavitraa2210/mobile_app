@@ -89,6 +89,24 @@
                         <input class="field-input" type="file" id="file" name="file" />
                     </td>
                 </tr>
+                <!--<tr class="grad-container" style="top: 700px;">
+                    <td class="grad-container-head">Latitude</td>
+                </tr>
+                 <tr class="field-contain" style="top: 750px;">
+                    <td>
+                        <input class="field-input" placeholder="Latitude" type="text" id="latitude" name="latitude"
+                            readonly />
+                    </td>
+                </tr>
+                <tr class="grad-container" style="top: 800px;">
+                    <td class="grad-container-head">Longitude</td>
+                </tr>
+                <tr class="field-contain" style="top: 850px;">
+                    <td>
+                        <input class="field-input" placeholder="Longitude" type="text" id="longitude" name="longitude"
+                            readonly />
+                    </td>
+                </tr> -->
                 <tr>
                     <td class="warning">
                         <span id="warning" class="hidden">Error</span>
@@ -107,6 +125,7 @@
     <script
         src="https://maps.googleapis.com/maps/api/js?key=AIzaSyD9DM7bHv4KTp7b0yChgfYBO1Xsgb5kLHk&v=3.exp&sensor=false&libraries=places"></script>
     <script src="assets/js/jquery.min.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
     <script src="assets/js/script.js?10"></script>
     <script>
         var vehicle_data = null;
@@ -148,10 +167,6 @@
 
             });
 
-            $('#trip').change(function () {
-                trip_data = this.value
-            });
-
             $('#date').change(function () {
                 date_data = this.value;
             });
@@ -160,6 +175,7 @@
                 file_data = this.value
 
             });
+
             $('#submit').click(function () {
                 submit_data();
             });
@@ -247,12 +263,6 @@
             }
 
 
-            if (trip_data == null) {
-                warn.innerHTML = 'Trip Id Cannot Be Empty';
-                warn.classList.remove('hidden');
-                scrollingElement.scrollTop = scrollingElement.scrollHeight;
-                return
-            }
 
             var fileInput = document.getElementById("file");
             var file = fileInput.files[0]; // Get the selected file
@@ -261,13 +271,11 @@
             var formData = new FormData(form[0]);
             formData.append('bill_doc', file);
             console.log(formData.get('bill_doc'));
+            var mylocation = getLatLng();
+           
 
-
-
-
-            addDriverExpenses(formData);
+            addDriverExpenses(formData,mylocation); // Pass locationData to the function
             console.log(formData);
-            // window.location = "expense_dashboard.html";
 
 
         }
