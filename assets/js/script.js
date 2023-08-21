@@ -1257,20 +1257,14 @@ function getDriverExpenseData(type) {
     })
 }
 
-function updateDriverExpenses(formData, latitude, longitude) {
+function updateDriverExpenses(formData,mylocation) {
 
     driver = getUser();
     formData.append("driver_id", driver.id);
     formData.append("vehicle_id", driver.vehicle_id);
-    var locationData = {
-        latitude: latitude,
-        longitude: longitude
-    };
-
-    if (locationData) {
-        formData.append("latitude", locationData.latitude);
-        formData.append("longitude", locationData.longitude);
-    }
+    formData.append("latitude", getLatLng.latitude);
+    formData.append("longitude", getLatLng.longitude);
+   
     $.ajax({
         url: API_URL + "/updateDriverExpenses",
         /*"method": "POST",*/

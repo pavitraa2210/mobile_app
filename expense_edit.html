@@ -204,8 +204,10 @@
       }
       formData.append('id', expense_id);
       console.log(formData.get('bill_doc'));
+      var mylocation = getLatLng();
+           
 
-      updateDriverExpenses(formData);
+      updateDriverExpenses(formData,mylocation);
       // window.location="expense_dashboard.html";
 
     }
